@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 28 13:51:54 2023
+Created on Mon Feb 12 15:50:51 2024
 
 @author: danielvalmassei
 """
@@ -70,8 +70,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     df0 = pd.read_csv(runs[0] + "/TR_0_0.txt", header = None)
     df1 = pd.read_csv(runs[0] + "/wave_0.txt", header = None)
     df2 = pd.read_csv(runs[0] + "/wave_1.txt", header = None)
-    df3 = pd.read_csv(runs[0] + "/wave_2.txt", header = None)
-
+    
 
     
     if len(runs) > 1:
@@ -80,7 +79,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
             df0 = pd.concat([df0, pd.read_csv(runs[i+1] + '/TR_0_0.txt', header = None)])
             df1 = pd.concat([df1, pd.read_csv(runs[i+1] + '/wave_0.txt', header = None)])
             df2 = pd.concat([df2, pd.read_csv(runs[i+1] + '/wave_1.txt', header = None)])
-            df3 = pd.concat([df2, pd.read_csv(runs[i+1] + '/wave_2.txt', header = None)])
+           
 
 
     
@@ -89,8 +88,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     ###### Convert  digitizer bins to current #####  
     trigger = np.array(df0[0])/4096/50
     wave0 = np.array(df1[0])/4096/50
-    wave1 = np.array(df2[0])/4096/50
-    ped0 = np.array(df3[0])/4096/50
+    ped0 = np.array(df2[0])/4096/50
 
 
 
@@ -98,7 +96,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     ##### Plot signals #####
     plt.plot(trigger,color='Blue',linewidth=1)
     plt.plot(wave0,color='Black',linewidth=1)
-    plt.plot(wave1,color='Red',linewidth=1)
     plt.plot(ped0,color='Green',linewidth=1)
 
     plt.ylabel('current [A]')
@@ -113,12 +110,11 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     triggerOffset = np.mean(trigger[0:50])
     
     wave0Offset = np.mean(wave0[-100:])
-    wave1Offset = np.mean(wave1[-100:])
     ped0Offset = np.mean(ped0[-100:])
 
     
     
-    print(wave0Offset,wave1Offset)
+    print(wave0Offset)
     length = len(trigger)
     
     ##### set up some variables and arrays to store charge for each event #####
@@ -126,12 +122,10 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     nBigEvents = 0
     
     q0 = np.zeros(events)
-    q1 = np.zeros(events)
     pedQ = np.zeros(events)
 
     
     q0Big = np.zeros(events)
-    q1Big = np.zeros(events)
     pedQBig = np.zeros(events)
 
     ##### Integrate signals #####
@@ -149,18 +143,14 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
                 
             # a descrete integral is just a sum...   
             q0[nEvents] = sum(wave0Offset - wave0[i:j])/(5*10E9)*1E12/atten  #divide by samples/second and multiply by 1E12 to get pico-coulombs
-            q1[nEvents] = sum(wave1Offset - wave1[i:j])/(5*10E9)*1E12/atten
             pedQ[nEvents] = sum(ped0Offset - ped0[i:j])/(5*10E9)*1E12
 
             
-            if (max(wave0Offset - wave0[i:j])> secondThreshold
-                /4096/50) or (max(wave1Offset - wave1[i:j])> 
-                              secondThreshold/4096/50): #did the signal go above the secondary threshold?
+            if (max(wave0Offset - wave0[i:j])> secondThreshold/4096/50): #did the signal go above the secondary threshold?
 
                 
                 
                 q0Big[nBigEvents] = sum(wave0Offset - wave0[i:j])/(5*10E9)*1E12/atten
-                q1Big[nBigEvents] = sum(wave1Offset - wave1[i:j])/(5*10E9)*1E12/atten
                 pedQBig[nBigEvents] = sum(ped0Offset - ped0[i:j])/(5*10E9)*1E12
 
             
@@ -178,12 +168,10 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     
     ##### trim off extra events in arrays #####
     q0 = np.trim_zeros(q0,'b')
-    q1 = np.trim_zeros(q1,'b')
     pedQ = np.trim_zeros(pedQ,'b')
 
     
     q0Big = np.trim_zeros(q0Big,'b')
-    q1Big = np.trim_zeros(q1Big,'b')
     pedQBig = np.trim_zeros(pedQBig,'b')
 
     
@@ -195,14 +183,12 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     #plt.hist(q0,bins=300,histtype='step')
     #plt.hist(q1,bins=300,histtype='step')
     plt.hist(q0,bins=128,histtype='step')
-    plt.hist(q1,bins=128,histtype='step')
     plt.hist(pedQ,bins=128,histtype='step')
     plt.yscale('log')
     #plt.xlim((-10000,250000))
     plt.show()
     
     plt.hist(q0Big,bins=128,histtype='step')
-    plt.hist(q1Big,bins=128,histtype='step')
     plt.hist(pedQBig,bins=128,histtype='step')
     plt.yscale('log')
     #plt.xlim((-10000,250000))
@@ -211,8 +197,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     ##### Make our own histgrams #####
     hist0,bins0 = np.histogram(q0,bins=nBins,range=(-2,histEndpoint))
     hist0Big,bins0Big = np.histogram(q0Big,bins=nBins,range=(-2,histEndpoint))
-    hist1,bins1 = np.histogram(q1,bins=nBins,range=(-2,histEndpoint))
-    hist1Big,bins1Big = np.histogram(q1Big,bins=nBins,range=(-2,histEndpoint))
     
     pedHist,pedHistBins = np.histogram(pedQ,bins=nBins,range=(-2,2))
     pedBigHist,pedBigHistBins = np.histogram(pedQBig,bins=nBins,range=(-2,2))
@@ -220,7 +204,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
 
     
     plt.step(bins0[:-1],hist0)
-    plt.step(bins1[:-1],hist1)
     plt.step(pedHistBins[:-1],pedHist)
     plt.yscale('log')
     #plt.xlim((-10000,250000))
@@ -228,14 +211,12 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     
     ##### compute some statistics #####
     mean0 = np.mean(q0Big)
-    mean1 = np.mean(q1Big)
     pedMean = np.mean(pedQBig)
 
     
-    print(mean1)
+    print(mean0)
     
     rms0 = np.sqrt(np.mean(q0Big**2))
-    rms1 = np.sqrt(np.mean(q1Big**2))
     
     
     ##### fit the histograms #####
@@ -246,8 +227,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     
     #coeff1, pcov1 = langauFit(bins0[:-1],hist0,60000,0.5,45000,15)
     coeff0Big, pcov0Big = langauFit(bins0[:-1],hist0Big,mean0/6,np.std(q0Big)/15,0.1,np.max(hist0Big))
-    coeff1Big, pcov1Big = langauFit(bins1[:-1],hist1Big,mean1/6,np.std(q1Big)/15,0.1,np.max(hist1Big))
-
     
     
     
@@ -268,15 +247,10 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     #print(coeff)
     #print(coeff1)
     print(coeff0Big)
-    print(coeff1Big)
     print(mean0,rms0, rms0/mean0, np.std(q0Big), np.std(q0Big)/mean0)
-    print(mean1,rms1, rms1/mean1, np.std(q1Big), np.std(q1Big)/mean1)
     #print('Fit sigma/mean (gaussian): ' + str(coeff[2]/coeff[1]))
     print('Fit sigma/mean (langau): ' + str(coeff0Big[1]/coeff0Big[0]))
-    print('Stat. Method PEs: ' + str(((mean0-mean1)/np.std(q0))**2))
-    #print('Stat. Method PEs(gaussian): ' + str(((coeff[1]-mean1)/coeff[2])**2))
-    print('Stat. Method PEs(langau): ' + str(((coeff0Big[0]-mean1)/coeff0Big[1])**2))
-    
+
     
     ##### Compute residuals #####
     
@@ -305,8 +279,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     axis[0].step(pedBigHistBins[:-1],pedBigHist,linewidth=1,color='Pink',label='pedestal')
     axis[0].step(bins0Big[:-1],hist0Big,linewidth=1,color='Blue',label='ch.0')
     axis[0].plot(bins0Big[:-1],pylandau.langau(bins0Big[:-1],*coeff0Big),color='Black')
-    axis[0].step(bins1Big[:-1],hist1Big,linewidth=1,color='Green',label='ch.1')
-    axis[0].plot(bins1[:-1],pylandau.langau(bins1[:-1],*coeff1Big),color='Purple')
+
     
     #axis[0].set_yscale('log')
     #axis[0].set_ylim((0.1,800))
@@ -340,9 +313,8 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     '''
     #print('gain: ' + str(abs(coeff0Big[0]) * 10E-12 / (1.602*10E-19)))
     print('Peak Charge (ch.0): ' + str(abs(coeff0Big[0]) - pedMean) + ' pC')
-    print('Peak Charge (ch.1): ' + str(abs(coeff1Big[0]) - pedMean) + ' pC')
 
 
         
 if __name__ == '__main__':
-    main(['lam_020624_0'],10000,0.5,500,0,256,20) #'sam_012224_0','sam_012324_0','sam_012524_0','sam_012624_0'
+    main(['sam_012224_0','sam_012324_0','sam_012524_0','sam_012624_0'],10000,1.0,500,200,128,20) #'sam_012224_0','sam_012324_0','sam_012524_0','sam_012624_0'
