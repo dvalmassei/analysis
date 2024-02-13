@@ -36,57 +36,35 @@ def langauFit(x, y, mpv, sigma, eta, A):
     return coeff, pcov
 
 def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
-    '''
-    Parameters
-    ----------
-    runs : list of strings
-        Defines runs for analysis
-    events : int
-        Number of events in combined runs. Must be greater than the total 
-        number of events
-    atten : int
-        Attenuation factor. atten=1 for no gain/attenuation.
-    triggerThreshold : int
-        Threshold for analysis trigger. Typically 500
-    secondThreshold : int
-        Secondary threshold. # of digitizer bins above offset for secondary trigger
-    nBins : int
-        # of bins for histograms
-    histEndpoint : int/double
-        endpoint for histogram in pC
-
-    Returns
-    -------
-    None.
-
-    '''
-    
     #plt.style.use(hep.style.ALICE)
     
-    triggerThreshold = triggerThreshold/4096/50 #convert digitizer bins to current
+    triggerThreshold = triggerThreshold/4096/50
     
     print('Loading data. This could take a couple minutes. Please wait...')
 
-    df0 = pd.read_csv(runs[0] + "/TR_0_0.txt", header = None)
-    df1 = pd.read_csv(runs[0] + "/wave_0.txt", header = None)
-    df2 = pd.read_csv(runs[0] + "/wave_1.txt", header = None)
-    df3 = pd.read_csv(runs[0] + "/wave_2.txt", header = None)
+    df0 = pd.read_csv("../data/" + runs[0] + "/TR_0_0.txt", header = None)
+    df1 = pd.read_csv("../data/" + runs[0] + "/wave_0.txt", header = None)
+    df2 = pd.read_csv("../data/" + runs[0] + "/wave_1.txt", header = None)
+    df3 = pd.read_csv("../data/" + runs[0] + "/wave_2.txt", header = None)
 
 
     
     if len(runs) > 1:
         for i in range(len(runs)-1):
             
-            df0 = pd.concat([df0, pd.read_csv(runs[i+1] + '/TR_0_0.txt', header = None)])
-            df1 = pd.concat([df1, pd.read_csv(runs[i+1] + '/wave_0.txt', header = None)])
-            df2 = pd.concat([df2, pd.read_csv(runs[i+1] + '/wave_1.txt', header = None)])
-            df3 = pd.concat([df2, pd.read_csv(runs[i+1] + '/wave_2.txt', header = None)])
+            df0 = pd.concat([df0, pd.read_csv("../data/" + runs[i+1] + '/TR_0_0.txt',
+                                              header = None)])
+            df1 = pd.concat([df1, pd.read_csv("../data/" + runs[i+1] + '/wave_0.txt',
+                                              header = None)])
+            df2 = pd.concat([df2, pd.read_csv("../data/" + runs[i+1] + '/wave_1.txt',
+                                              header = None)])
+            df3 = pd.concat([df2, pd.read_csv("../data/" + runs[i+1] + '/wave_2.txt',
+                                              header = None)])
 
 
     
     print('Data loaded!')
 
-    ###### Convert  digitizer bins to current #####  
     trigger = np.array(df0[0])/4096/50
     wave0 = np.array(df1[0])/4096/50
     wave1 = np.array(df2[0])/4096/50
@@ -95,7 +73,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
 
 
     
-    ##### Plot signals #####
+    
     plt.plot(trigger,color='Blue',linewidth=1)
     plt.plot(wave0,color='Black',linewidth=1)
     plt.plot(wave1,color='Red',linewidth=1)
@@ -108,8 +86,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     
     print('Integrating signals. This could take a moment. Please wait...')
     
-    ##### get offsets for each signal #####
-    
+    #integrate waveforms and record energies in an array
     triggerOffset = np.mean(trigger[0:50])
     
     wave0Offset = np.mean(wave0[-100:])
@@ -121,7 +98,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     print(wave0Offset,wave1Offset)
     length = len(trigger)
     
-    ##### set up some variables and arrays to store charge for each event #####
     nEvents = 0
     nBigEvents = 0
     
@@ -134,28 +110,26 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     q1Big = np.zeros(events)
     pedQBig = np.zeros(events)
 
-    ##### Integrate signals #####
+    
     i = 0
     
-    while i < length: #are we still within the uploaded signal?
-        if trigger[i] > triggerOffset - triggerThreshold: #did the trigger go above threshold?
+    while i < length:
+        if trigger[i] > triggerOffset - triggerThreshold:
             i += 1
         
-        else: 
+        else: #trigger[i] < triggerOffset - triggerThreshold:
             j = i + 1
             
-            while trigger[j] < triggerOffset - triggerThreshold: 
+            while trigger[j] < triggerOffset - triggerThreshold:
                 j += 1
                 
-            # a descrete integral is just a sum...   
+                
             q0[nEvents] = sum(wave0Offset - wave0[i:j])/(5*10E9)*1E12/atten  #divide by samples/second and multiply by 1E12 to get pico-coulombs
             q1[nEvents] = sum(wave1Offset - wave1[i:j])/(5*10E9)*1E12/atten
             pedQ[nEvents] = sum(ped0Offset - ped0[i:j])/(5*10E9)*1E12
 
             
-            if (max(wave0Offset - wave0[i:j])> secondThreshold
-                /4096/50) or (max(wave1Offset - wave1[i:j])> 
-                              secondThreshold/4096/50): #did the signal go above the secondary threshold?
+            if (max(wave0Offset - wave0[i:j])> secondThreshold/4096/50) or (max(wave1Offset - wave1[i:j])> secondThreshold/4096/50):
 
                 
                 
@@ -176,7 +150,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     #print(q0_0)
     #print(q1)
     
-    ##### trim off extra events in arrays #####
+    
     q0 = np.trim_zeros(q0,'b')
     q1 = np.trim_zeros(q1,'b')
     pedQ = np.trim_zeros(pedQ,'b')
@@ -188,9 +162,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
 
     
     print(len(q0),len(q0Big))
-    
-    ##### Plot some histograms using pyplot #####
-    
     
     #plt.hist(q0,bins=300,histtype='step')
     #plt.hist(q1,bins=300,histtype='step')
@@ -208,7 +179,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     #plt.xlim((-10000,250000))
     plt.show()
     
-    ##### Make our own histgrams #####
+    
     hist0,bins0 = np.histogram(q0,bins=nBins,range=(-2,histEndpoint))
     hist0Big,bins0Big = np.histogram(q0Big,bins=nBins,range=(-2,histEndpoint))
     hist1,bins1 = np.histogram(q1,bins=nBins,range=(-2,histEndpoint))
@@ -226,7 +197,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     #plt.xlim((-10000,250000))
     plt.show()
     
-    ##### compute some statistics #####
+    
     mean0 = np.mean(q0Big)
     mean1 = np.mean(q1Big)
     pedMean = np.mean(pedQBig)
@@ -237,8 +208,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     rms0 = np.sqrt(np.mean(q0Big**2))
     rms1 = np.sqrt(np.mean(q1Big**2))
     
-    
-    ##### fit the histograms #####
     
     #coeff, pcov = gaussFit(bins0Big[:-1],hist0Big,np.max(hist0Big),mean0,np.std(q0Big))
     #coeff1Big, pcov1Big = gaussFit(bins1Big[:-1],hist1Big,np.max(hist1Big),mean0,np.std(q1Big))
@@ -263,7 +232,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     plt.show()
     
     
-    ##### Print #####
+    
     
     #print(coeff)
     #print(coeff1)
@@ -278,7 +247,7 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     print('Stat. Method PEs(langau): ' + str(((coeff0Big[0]-mean1)/coeff0Big[1])**2))
     
     
-    ##### Compute residuals #####
+    
     
     #resGauss = gauss(bins0Big[:-1],*coeff) - hist0Big 
     resLangau = pylandau.langau(bins0Big[:-1],*coeff0Big) - hist0Big
@@ -298,8 +267,6 @@ def main(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpoint):
     plt.show()
 
 
-    ##### Make our final figure #####
-    
     figure, axis = plt.subplots(2, 1, height_ratios=[4,1],sharex=True,figsize=(10,7))
     
     axis[0].step(pedBigHistBins[:-1],pedBigHist,linewidth=1,color='Pink',label='pedestal')
