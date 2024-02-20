@@ -348,18 +348,21 @@ def returnFig(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpo
     
     #print('Loading data. This could take a couple minutes. Please wait...')
 
-    df0 = pd.read_csv(runs[0] + "/TR_0_0.txt", header = None)
-    df1 = pd.read_csv(runs[0] + "/wave_0.txt", header = None)
-    df2 = pd.read_csv(runs[0] + "/wave_1.txt", header = None)
+    df0 = pd.read_csv("../data/" + runs[0] + "/TR_0_0.txt", header = None)
+    df1 = pd.read_csv("../data/" + runs[0] + "/wave_0.txt", header = None)
+    df2 = pd.read_csv("../data/" + runs[0] + "/wave_1.txt", header = None)
     
 
     
     if len(runs) > 1:
         for i in range(len(runs)-1):
             
-            df0 = pd.concat([df0, pd.read_csv(runs[i+1] + '/TR_0_0.txt', header = None)])
-            df1 = pd.concat([df1, pd.read_csv(runs[i+1] + '/wave_0.txt', header = None)])
-            df2 = pd.concat([df2, pd.read_csv(runs[i+1] + '/wave_1.txt', header = None)])
+            df0 = pd.concat([df0, pd.read_csv("../data/" + runs[i+1] + '/TR_0_0.txt',
+                                              header = None)])
+            df1 = pd.concat([df1, pd.read_csv("../data/" + runs[i+1] + '/wave_0.txt',
+                                              header = None)])
+            df2 = pd.concat([df2, pd.read_csv("../data/" + runs[i+1] + '/wave_1.txt',
+                                              header = None)])
            
 
 
