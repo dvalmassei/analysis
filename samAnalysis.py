@@ -576,7 +576,7 @@ def onlyOnePlot(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEnd
     axis[1].set_ylabel('residuals',fontsize='medium',labelpad=2.0)
     axis[1].set_xlabel('pC',fontsize='medium',labelpad=2.0)
     
-    #plt.show()
+    plt.show()
 
     
     '''
