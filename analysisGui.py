@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 
+import matplotlib.pyplot as plt
 import samAnalysis
 import lamAnalysis
 
@@ -97,7 +98,7 @@ class AnalysisApp(QWidget):
 
         try:
             analysis_func = globals()[analysis_func_name]
-            analysis_func.main(runNums, events, atten, triggerThreshold, secondaryThreshold, nBins, histEndpoint)
+            plt.show(analysis_func.onlyOnePlot(runNums, events, atten, triggerThreshold, secondaryThreshold, nBins, histEndpoint))
         except Exception as e:
             QMessageBox.critical(self, 'Error', str(e))
 
