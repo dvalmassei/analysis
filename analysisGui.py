@@ -98,7 +98,7 @@ class AnalysisApp(QWidget):
 
         try:
             analysis_func = globals()[analysis_func_name]
-            plt.show(analysis_func.onlyOnePlot(runNums, events, atten, triggerThreshold, secondaryThreshold, nBins, histEndpoint))
+            plt.show(analysis_func.returnFig(runNums, events, atten, triggerThreshold, secondaryThreshold, nBins, histEndpoint))
         except Exception as e:
             QMessageBox.critical(self, 'Error', str(e))
 
