@@ -588,7 +588,7 @@ def returnFig(runs,events,atten,triggerThreshold,secondThreshold,nBins,histEndpo
     print('Peak Charge (ch.1): ' + str(abs(coeff1Big[0]) - pedMean) + ' pC')
     
     
-    return figure
+    return figure, coeff0Big, pedMean
 
         
 if __name__ == '__main__':
