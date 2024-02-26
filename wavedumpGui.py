@@ -5,31 +5,34 @@ Created on Mon Feb 26 10:07:52 2024
 
 @author: danielvalmassei
 """
-
 import os
 import sys
 import subprocess
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QTextEdit
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Wavedump Controller")
-        self.setGeometry(100, 100, 400, 200)
+        self.setGeometry(100, 100, 600, 400)
 
         self.label_run_name = QLabel("Run Name:", self)
-        self.label_run_name.setGeometry(50, 50, 100, 30)
+        self.label_run_name.setGeometry(150, 50, 100, 30)
         self.input_run_name = QLineEdit(self)
-        self.input_run_name.setGeometry(150, 50, 200, 30)
+        self.input_run_name.setGeometry(250, 50, 200, 30)
 
         self.label_run_length = QLabel("Run Length (min):", self)
-        self.label_run_length.setGeometry(50, 95, 100, 30)
+        self.label_run_length.setGeometry(150, 90, 120, 30)
         self.input_run_length = QLineEdit(self)
-        self.input_run_length.setGeometry(150, 95, 200, 30)
+        self.input_run_length.setGeometry(270, 90, 180, 30)
 
         self.start_button = QPushButton("Start Run", self)
-        self.start_button.setGeometry(50, 130, 300, 50)
+        self.start_button.setGeometry(150, 130, 300, 50)
         self.start_button.clicked.connect(self.start_run)
+
+        self.output_text = QTextEdit(self)
+        self.output_text.setGeometry(50, 200, 500, 150)
+        self.output_text.setReadOnly(True)
 
     def start_run(self):
         run_name = self.input_run_name.text()
@@ -42,28 +45,35 @@ class MainWindow(QMainWindow):
         
         try:
             os.makedirs(output_folder, exist_ok=True)
-            subprocess.Popen([wavedump_cmd, config_file])
+            self.output_text.append("Starting Wavedump...\n")
+            subprocess.Popen([wavedump_cmd, config_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             # Start acquisition
+            self.output_text.append("Starting acquisition...\n")
             subprocess.run(["echo", "s"], cwd=wavedump_path)
 
             # Continuously write output to files
+            self.output_text.append("Continuously writing output...\n")
             subprocess.run(["echo", "W"], cwd=wavedump_path)
 
             # Wait for the specified run length
+            self.output_text.append(f"Waiting for {run_length} minutes...\n")
             subprocess.run(["sleep", str(run_length * 60)])
 
             # Stop acquisition
+            self.output_text.append("Stopping acquisition...\n")
             subprocess.run(["echo", "q"], cwd=wavedump_path)
             subprocess.run(["echo", "w"], cwd=wavedump_path)
             
             # Move output files to the specified folder
+            self.output_text.append("Moving output files...\n")
             subprocess.run(["cp", os.path.join(wavedump_path, "TR_0_0.txt"), output_folder])
             subprocess.run(["cp", os.path.join(wavedump_path, "wave_0.txt"), output_folder])
             subprocess.run(["cp", os.path.join(wavedump_path, "wave_1.txt"), output_folder])
+            self.output_text.append("Run completed.\n")
 
         except Exception as e:
-            print("Error:", e)
+            self.output_text.append(f"Error: {e}\n")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
