@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.setup_layout()
 
         self.proc = None
+        self.output_file = None
 
     def setup_layout(self):
         layout = QGridLayout()
@@ -78,11 +79,13 @@ class MainWindow(QMainWindow):
         wavedump_cmd = os.path.join(wavedump_path, "wavedump")
         config_file = os.path.join(wavedump_path, "WaveDumpConfig_X742.txt")
         output_folder = os.path.expanduser(f"~/data/{run_name}/")
-        
+        output_file_path = os.path.join(output_folder, "output.log")
+
         try:
             os.makedirs(output_folder, exist_ok=True)
+            self.output_file = open(output_file_path, "w")
             self.output_text.append("Starting Wavedump...\n")
-            self.proc = subprocess.Popen([wavedump_cmd, config_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            self.proc = subprocess.Popen([wavedump_cmd, config_file], stdout=self.output_file, stderr=subprocess.STDOUT, text=True)
             self.start_button.setEnabled(False)
             self.cancel_button.setEnabled(True)
             self.input_run_name.setEnabled(False)
@@ -128,6 +131,9 @@ class MainWindow(QMainWindow):
             self.input_run_length.setEnabled(True)
             for checkbox in self.channel_checkboxes:
                 checkbox.setEnabled(True)
+        finally:
+            if self.output_file:
+                self.output_file.close()
 
     def cancel_run(self):
         if self.proc is not None and self.proc.poll() is None:
@@ -148,4 +154,5 @@ if __name__ == "__main__":
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
