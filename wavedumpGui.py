@@ -17,22 +17,31 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 600, 400)
 
         self.label_run_name = QLabel("Run Name:", self)
-        self.label_run_name.setGeometry(150, 50, 100, 30)
+        self.label_run_name.setGeometry(50, 50, 100, 30)
         self.input_run_name = QLineEdit(self)
-        self.input_run_name.setGeometry(250, 50, 200, 30)
+        self.input_run_name.setGeometry(150, 50, 200, 30)
+        self.input_run_name.setEnabled(False)
 
         self.label_run_length = QLabel("Run Length (min):", self)
-        self.label_run_length.setGeometry(150, 90, 120, 30)
+        self.label_run_length.setGeometry(50, 90, 100, 30)
         self.input_run_length = QLineEdit(self)
-        self.input_run_length.setGeometry(270, 90, 180, 30)
+        self.input_run_length.setGeometry(150, 90, 200, 30)
+        self.input_run_length.setEnabled(False)
 
         self.start_button = QPushButton("Start Run", self)
-        self.start_button.setGeometry(150, 130, 300, 50)
+        self.start_button.setGeometry(50, 130, 100, 50)
         self.start_button.clicked.connect(self.start_run)
+
+        self.cancel_button = QPushButton("Cancel Run", self)
+        self.cancel_button.setGeometry(200, 130, 100, 50)
+        self.cancel_button.clicked.connect(self.cancel_run)
+        self.cancel_button.setEnabled(False)
 
         self.output_text = QTextEdit(self)
         self.output_text.setGeometry(50, 200, 500, 150)
         self.output_text.setReadOnly(True)
+
+        self.proc = None
 
     def start_run(self):
         run_name = self.input_run_name.text()
@@ -46,7 +55,9 @@ class MainWindow(QMainWindow):
         try:
             os.makedirs(output_folder, exist_ok=True)
             self.output_text.append("Starting Wavedump...\n")
-            subprocess.Popen([wavedump_cmd, config_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            self.proc = subprocess.Popen([wavedump_cmd, config_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            self.start_button.setEnabled(False)
+            self.cancel_button.setEnabled(True)
 
             # Start acquisition
             self.output_text.append("Starting acquisition...\n")
@@ -65,15 +76,22 @@ class MainWindow(QMainWindow):
             subprocess.run(["echo", "q"], cwd=wavedump_path)
             subprocess.run(["echo", "w"], cwd=wavedump_path)
             
-            # Move output files to the specified folder
-            self.output_text.append("Moving output files...\n")
-            subprocess.run(["cp", os.path.join(wavedump_path, "TR_0_0.txt"), output_folder])
-            subprocess.run(["cp", os.path.join(wavedump_path, "wave_0.txt"), output_folder])
-            subprocess.run(["cp", os.path.join(wavedump_path, "wave_1.txt"), output_folder])
             self.output_text.append("Run completed.\n")
 
         except Exception as e:
             self.output_text.append(f"Error: {e}\n")
+            self.start_button.setEnabled(True)
+            self.cancel_button.setEnabled(False)
+
+    def cancel_run(self):
+        if self.proc is not None and self.proc.poll() is None:
+            self.output_text.append("Cancelling run...\n")
+            subprocess.run(["echo", "s"], cwd=os.path.expanduser("~/CAEN/wavedump-3.10.6/"))
+            subprocess.run(["echo", "q"], cwd=os.path.expanduser("~/CAEN/wavedump-3.10.6/"))
+            self.proc.terminate()
+            self.output_text.append("Run cancelled.\n")
+            self.start_button.setEnabled(True)
+            self.cancel_button.setEnabled(False)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
