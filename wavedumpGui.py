@@ -144,6 +144,7 @@ class MainWindow(QMainWindow):
         if self.proc is not None and self.proc.poll() is None:
             self.output_text.append("Cancelling run...\n")
             subprocess.run(["echo", "s"], cwd=os.path.expanduser("~/CAEN/wavedump-3.10.6/"))
+            subprocess.run(["sleep 1"])
             subprocess.run(["echo", "q"], cwd=os.path.expanduser("~/CAEN/wavedump-3.10.6/"))
             self.proc.terminate()
             self.output_text.append("Run cancelled.\n")
