@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
 
         wavedump_path = os.path.expanduser("~/CAEN/wavedump-3.10.6/")
         wavedump_cmd = os.path.join(wavedump_path, "wavedump")
-        config_file = os.path.join(wavedump_path, "WaveDumpConfig_X742.txt")
+        config_file = os.path.join(wavedump_path, " WaveDumpConfig_X742.txt")
         output_folder = os.path.expanduser(f"~/data/{run_name}/")
         output_file_path = os.path.join(output_folder, "output.log")
 
@@ -93,9 +93,13 @@ class MainWindow(QMainWindow):
             for checkbox in self.channel_checkboxes:
                 checkbox.setEnabled(False)
 
+            subprocess.run(["sleep 1"])
+
             # Start acquisition
             self.output_text.append("Starting acquisition...\n")
             subprocess.run(["echo", "s"], cwd=wavedump_path)
+            subprocess.run(["sleep 1"])
+
 
             # Continuously write output to files
             self.output_text.append("Continuously writing output...\n")
@@ -108,6 +112,7 @@ class MainWindow(QMainWindow):
             # Stop acquisition
             self.output_text.append("Stopping acquisition...\n")
             subprocess.run(["echo", "q"], cwd=wavedump_path)
+            subprocess.run(["sleep 1"])
             subprocess.run(["echo", "w"], cwd=wavedump_path)
             
             # Copy output files for selected channels to the specified folder
