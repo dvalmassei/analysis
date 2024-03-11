@@ -198,10 +198,10 @@ def main(data_folder, runs, data_channels, noise_channel, atten, triggerThreshol
     
     for i in range(len(hists)):
         if i in failed_fit_channels:
-            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, $r^2 = {r_squared[i]:.4f}$')
+            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, res = {std[i]/mean[i]:.4f}')
         else:
-            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, $r^2 = {r_squared[i]:.4f}$, res = {std[i]/mean[i]}')
-            axis[0].plot(bins[i], pylandau.langau(bins[i], *coeffs[i]), label = f'ch. {i} fit')
+            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, std/mean = {std[i]/mean[i]:.4f}')
+            axis[0].plot(bins[i], pylandau.langau(bins[i], *coeffs[i]), label = f'ch. {i} fit, $r^2 = {r_squared[i]:.4f}$')
             axis[1].scatter(bins[i], resLangau[i], s=3, label=f'ch. {i}')
 
     axis[0].step(pedbins,pedhist/2,linewidth=1,label=f'ch. {noise_channel[0]} (noise)') # divide by 2 so we can still see data histogram
