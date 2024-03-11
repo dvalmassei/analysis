@@ -200,11 +200,11 @@ def main(data_folder, runs, data_channels, noise_channel, atten, triggerThreshol
         if i in failed_fit_channels:
             axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, $r^2 = {r_squared[i]:.4f}$')
         else:
-            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, $r^2 = {r_squared[i]:.4f}$')
+            axis[0].step(bins[i], hists[i], linewidth=1, label=f'ch. {i}, $r^2 = {r_squared[i]:.4f}$, res = {std[i]/mean[i]}')
             axis[0].plot(bins[i], pylandau.langau(bins[i], *coeffs[i]), label = f'ch. {i} fit')
             axis[1].scatter(bins[i], resLangau[i], s=3, label=f'ch. {i}')
 
-    axis[0].step(pedbins,pedhist/2,linewidth=1,label=f'ch. {noise_channel[0]} (noise)')
+    axis[0].step(pedbins,pedhist/2,linewidth=1,label=f'ch. {noise_channel[0]} (noise)') # divide by 2 so we can still see data histogram
     axis[0].legend(fontsize='medium', frameon=True)
     axis[0].set_ylabel('# events', fontsize='medium', labelpad=2.0)
     axis[0].set_title(runs)
